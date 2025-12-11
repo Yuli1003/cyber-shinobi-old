@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Windows Desktop</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;900&display=swap" rel="stylesheet">
+    <!-- TensorFlow.js and BodyPix for person segmentation -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0"></script>
+  </head>
+  <body>
+    <div id="desktop">
+      <!-- Desktop Icons Container -->
+      <div id="desktop-icons"></div>
+      
+      <!-- Windows Container -->
+      <div id="windows-container"></div>
+      
+      <!-- Start Menu -->
+      <div id="start-menu" class="hidden">
+        <div class="start-menu-header">
+          <div class="user-avatar">👤</div>
+          <span class="user-name">User</span>
+        </div>
+        <div class="start-menu-apps">
+          <div class="start-app" data-app="notepad">
+            <span class="app-icon">📝</span>
+            <span>Notepad</span>
+          </div>
+          <div class="start-app" data-app="calculator">
+            <span class="app-icon">🔢</span>
+            <span>Calculator</span>
+          </div>
+          <div class="start-app" data-app="browser">
+            <span class="app-icon">🌐</span>
+            <span>Browser</span>
+          </div>
+          <div class="start-app" data-app="explorer">
+            <span class="app-icon">📁</span>
+            <span>File Explorer</span>
+          </div>
+          <div class="start-app" data-app="settings">
+            <span class="app-icon">⚙️</span>
+            <span>Settings</span>
+          </div>
+          <div class="start-app" data-app="terminal">
+            <span class="app-icon">💻</span>
+            <span>Terminal</span>
+          </div>
+        </div>
+        <div class="start-menu-footer">
+          <button class="power-btn">⏻ Power</button>
+        </div>
+      </div>
+      
+      <!-- Taskbar -->
+      <div id="taskbar">
+        <button id="start-btn">
+          <span class="start-icon">⊞</span>
+        </button>
+        <div id="taskbar-apps"></div>
+        <div id="system-tray">
+          <span id="clock"></span>
+        </div>
+      </div>
+      
+      <!-- Fog Effect -->
+      <div id="fog-container">
+        <div class="fog-side left">
+          <div class="fog-layer"></div>
+          <div class="fog-layer"></div>
+        </div>
+        <div class="fog-side right">
+          <div class="fog-layer"></div>
+          <div class="fog-layer"></div>
+        </div>
+      </div>
+      
+      <!-- Too Late Popup -->
+      <div id="too-late-popup" class="hidden">
+        <div class="popup-window">
+          <div class="popup-titlebar">
+            <span class="titlebar-text">System Warning</span>
+            <button class="titlebar-btn close">×</button>
+          </div>
+          <div class="popup-content">
+            <fieldset class="popup-fieldset">
+              <legend>Action</legend>
+              <p>It's too late to clean up now.</p>
+            </fieldset>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
