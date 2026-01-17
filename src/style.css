@@ -8,17 +8,87 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   overflow: hidden;
   user-select: none;
+  background: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+#main-canvas {
+  width: 1536px;
+  height: 864px;
+  position: relative;
+  overflow: hidden;
+  background: black;
+  flex-shrink: 0;
+}
+
+.syne-mono-regular {
+  font-family: "Syne Mono", monospace;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.jetbrains-mono {
+  font-family: "JetBrains Mono", monospace;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+.vt323-regular {
+  font-family: "VT323", monospace;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.doto {
+  font-family: "Doto", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+  font-variation-settings: "ROND" 0;
+}
+
+.sixtyfour {
+  font-family: "Sixtyfour", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-variation-settings: "BLED" 0, "SCAN" 0;
+}
+
+.bytesized-regular {
+  font-family: "Bytesized", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'W95';
+  src: url('../w95font/webfont/w95font.woff2') format('woff2'),
+       url('../w95font/webfont/w95font.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'W95';
+  src: url('../w95font/webfont/w95font-bold.woff2') format('woff2'),
+       url('../w95font/webfont/w95font-bold.woff') format('woff');
+  font-weight: bold;
+  font-style: normal;
 }
 
 #desktop {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   background: linear-gradient(135deg, #1e3a5f 0%, #0c1929 100%);
   position: relative;
   overflow: hidden;
 }
 
-/* Fog overlay container */
+Fog overlay container
 #fog-container {
   position: fixed;
   bottom: 0;
@@ -279,12 +349,10 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  transition: opacity 0.5s ease-out;
 }
 
 #lock-screen.hidden {
-  opacity: 0;
-  pointer-events: none;
+  display: none;
 }
 
 .lock-screen-box {
@@ -297,17 +365,19 @@ body {
   color: white;
   width: 350px;
   transition: transform 0.1s ease-in-out;
+  position: relative;
+  overflow: visible;
 }
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  50% { transform: translateX(5px); }
-  75% { transform: translateX(-5px); }
+  12% { transform: translateX(-5px); }
+  25% { transform: translateX(5px); }
+  30% { transform: translateX(-5px); }
 }
 
 .lock-screen-box.shake {
-  animation: shake 0.3s;
+  animation: shake 0.4s steps(4);
 }
 
 .lock-screen-box h2 {
@@ -385,10 +455,40 @@ body {
   background: #333;
   color: white;
   padding: 5px 10px;
-  border-radius: 5px;
-  font-size: 12px;
-  white-space: nowrap;
-  z-index: 1;
+}
+
+/* Black pixel disintegration effect */
+.pixel-particle {
+  position: absolute;
+  background: #000;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 1 !important;
+}
+
+@keyframes pixelFloat {
+  to {
+    transform: translate(var(--tx), var(--ty));
+  }
+}
+
+.lock-screen-box.disintegrating {
+  animation: glitchShiftLeft 0.5s steps(3) forwards;
+}
+
+@keyframes glitchShiftLeft {
+  0% { 
+    transform: translateX(0);
+  }
+  40% {
+    transform: translateX(-30px);
+  }
+  60% {
+    transform: translateX(0);
+  }
+  100% { 
+    transform: translateX(0);
+  }
 }
 
 #login-error {
@@ -400,6 +500,277 @@ body {
   display: none;
 }
 
+/* Antivirus Shield Icon */
+#antivirus-icon-container {
+  position: fixed;
+  bottom: 10px;
+  right: 110px;
+  z-index: 10000;
+}
+
+#antivirus-icon-container.hidden {
+  display: none;
+}
+
+.antivirus-icon-small {
+  font-size: 25px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  line-height: 1;
+  display: block;
+}
+
+#antivirus-icon-container.show-icon .antivirus-icon-small {
+  opacity: 1;
+}
+
+.antivirus-exclamation {
+  position: absolute;
+  top: -10px;
+  right: -5px;
+  background: #e74c3c;
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+#antivirus-icon-container.show-exclamation .antivirus-exclamation {
+  opacity: 1;
+  transform: scale(1);
+  animation: popBounce 0.4s ease-out;
+}
+
+.antivirus-exclamation:hover {
+  transform: scale(1.1);
+  background: #c0392b;
+}
+
+/* Antivirus Notification Popup */
+#antivirus-notification-container {
+  position: fixed;
+  bottom: 65px;
+  right: 20px;
+  z-index: 10000;
+}
+
+#antivirus-notification-container.hidden {
+  display: none;
+}
+
+#antivirus-notification-container.show-notification .antivirus-notification {
+  display: block;
+  animation: popIn 0.2s ease-out;
+}
+
+@keyframes popBounce {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.antivirus-notification {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid #e74c3c;
+  border-radius: 8px;
+  padding: 20px;
+  width: 350px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.antivirus-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.antivirus-icon {
+  font-size: 24px;
+}
+
+.antivirus-title {
+  color: #e74c3c;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.antivirus-content {
+  margin-bottom: 15px;
+}
+
+.antivirus-message {
+  color: #fff;
+  font-size: 14px;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.antivirus-recommendation {
+  color: #bbb;
+  font-size: 13px;
+  margin: 0;
+}
+
+.antivirus-update-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.antivirus-update-btn:hover {
+  background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+.antivirus-update-btn:active {
+  transform: translateY(0);
+}
+
+/* Installation Window Content */
+.installation-window-content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  background: #fff;
+  height: 100%;
+}
+
+.installation-status {
+  color: #333;
+  font-size: 14px;
+  margin: 0;
+  font-weight: 500;
+  text-align: center;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  overflow: visible;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #0078d4 0%, #00a3ff 100%);
+  transition: width 0.05s linear;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0, 120, 212, 0.3);
+}
+
+.installation-percentage {
+  color: #0078d4;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  margin: 0;
+}
+
+/* Interference pixels */
+.interference-pixel {
+  position: absolute;
+  background: #000;
+  pointer-events: none;
+  z-index: 10;
+  transition: left 2s steps(10);
+}
+
+/* Update Failed Popup */
+#update-failed-popup {
+  position: fixed;
+  bottom: 65px;
+  right: 20px;
+  z-index: 10001;
+}
+
+#update-failed-popup.hidden {
+  display: none;
+}
+
+.installation-window {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid #e74c3c;
+  border-radius: 8px;
+  padding: 20px;
+  width: 350px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  animation: popIn 0.2s ease-out;
+}
+
+.installation-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.installation-icon {
+  font-size: 24px;
+}
+
+.installation-title {
+  color: #0078d4;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.installation-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.installation-content .installation-status {
+  color: #fff;
+  text-align: left;
+}
+
 /* Desktop Icons */
 #desktop-icons {
   padding: 20px;
@@ -409,6 +780,9 @@ body {
   align-content: flex-start;
   height: calc(100vh - 48px);
   gap: 10px;
+  position: relative;
+  z-index: 100;
+  pointer-events: none;
 }
 
 .desktop-icon {
@@ -422,6 +796,8 @@ body {
   border-radius: 4px;
   padding: 8px;
   transition: background-color 0.2s;
+  position: relative;
+  pointer-events: auto;
 }
 
 .desktop-icon:hover {
@@ -436,6 +812,8 @@ body {
 .desktop-icon .icon {
   font-size: 40px;
   margin-bottom: 5px;
+  line-height: 1;
+  display: block;
 }
 
 .desktop-icon .label {
@@ -644,13 +1022,24 @@ body {
   right: 0;
   bottom: 48px;
   pointer-events: none;
-  z-index: 100;
+  z-index: 1200;
 }
 
 .window {
   position: absolute;
   background-color: #fff;
   border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  pointer-events: auto;
+  min-width: 300px;
+  min-height: 200px;
+}
+
+.hacked-window {
+  position: absolute;
+  background-color: #fff;
+  border-radius: 2px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   pointer-events: auto;
@@ -1429,3 +1818,204 @@ body {
   background-color: rgba(255, 255, 255, 0.1);
   margin: 5px 0;
 }
+
+/* Glitch pixel movement animation */
+@keyframes glitchPixelMove {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(var(--move-x), var(--move-y));
+  }
+}
+
+/* Windows 95 Text Viewer */
+.win95-readme-window {
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.win95-readme-window .window-titlebar {
+  background: #8B0000 !important;
+  height: 20px !important;
+  padding: 2px 4px !important;
+}
+
+.win95-readme-window .window-title {
+  color: #ffffff !important;
+  font-family: 'VT323', 'MS Sans Serif', monospace !important;
+  font-size: 13px !important;
+  font-weight: normal !important;
+}
+
+.win95-readme-window .window-controls button {
+  width: 16px !important;
+  height: 14px !important;
+  background: #ffffff !important;
+  border: 1px solid #000000 !important;
+  box-shadow: none !important;
+  font-size: 11px !important;
+  font-weight: bold !important;
+  color: #000000 !important;
+  font-family: 'VT323', monospace !important;
+}
+
+.win95-readme-window .window-controls button:active {
+  background: #e0e0e0 !important;
+  box-shadow: none !important;
+}
+
+.win95-readme-window .window-controls button:hover {
+  background: #f0f0f0 !important;
+}
+
+.win95-readme-window .window-content {
+  background: #ffffff !important;
+  height: calc(100% - 20px) !important;
+}
+
+.win95-text-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #ffffff;
+}
+
+.win95-menubar {
+  display: flex;
+  gap: 2px;
+  padding: 2px 4px;
+  background: #ffffff;
+  border-bottom: 1px solid #000000;
+  font-family: 'VT323', 'MS Sans Serif', monospace;
+  font-size: 12px;
+}
+
+.win95-menu-item {
+  padding: 2px 8px;
+  color: #000000;
+  cursor: default;
+}
+
+.win95-menu-item:hover {
+  background: #8B0000;
+  color: #ffffff;
+}
+
+.win95-text-content {
+  flex: 1;
+  background: #ffffff;
+  border: 2px solid #000000;
+  margin: 2px;
+  overflow: hidden;
+  padding: 32px 28px;
+  position: relative;
+}
+
+.bamboo-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Windows 95 scrollbar */
+.win95-text-content::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+.win95-text-content::-webkit-scrollbar-track {
+  background: #ffffff;
+  border: 1px solid #000000;
+}
+
+.win95-text-content::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border: 2px solid #000000;
+}
+
+.win95-text-content::-webkit-scrollbar-thumb:hover {
+  background: #f0f0f0;
+}
+
+.win95-text-content::-webkit-scrollbar-thumb:active {
+  background: #e0e0e0;
+}
+
+.win95-text-content::-webkit-scrollbar-button {
+  background: #ffffff;
+  border: 1px solid #000000;
+  height: 16px;
+  width: 16px;
+}
+
+.win95-text-content::-webkit-scrollbar-button:hover {
+  background: #f0f0f0;
+}
+
+.win95-text-content::-webkit-scrollbar-button:active {
+  background: #e0e0e0;
+}
+
+.win95-text-content::-webkit-scrollbar-button:vertical:decrement {
+  background: #ffffff;
+}
+
+.win95-text-content::-webkit-scrollbar-button:vertical:increment {
+  background: #ffffff;
+}
+
+.win95-text-content::-webkit-scrollbar-corner {
+  background: #ffffff;
+  border: 1px solid #000000;
+}
+
+.win95-text {
+  font-family: 'VT323', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #000000;
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+}
+
+/* ============================================
+   BLACK SLIME TENTACLES
+   ============================================ */
+
+#black-slime-container {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.slime-corner {
+  /* Ensure pixelated look is preserved */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  /* No smoothing */
+  -ms-interpolation-mode: nearest-neighbor;
+}
+
+#slime-blackout {
+  /* Ensure smooth fade */
+  will-change: opacity;
+}
+

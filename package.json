@@ -13,5 +13,11 @@
   "license": "ISC",
   "devDependencies": {
     "vite": "^5.4.21"
+  },
+  "dependencies": {
+    "@react-three/fiber": "^9.4.2",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "three": "^0.182.0"
   }
 }

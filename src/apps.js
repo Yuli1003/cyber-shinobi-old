@@ -1,9 +1,51 @@
 // App configurations and initialization functions
 
 export const apps = {
+  readme: {
+    title: 'README.txt - Notepad',
+    icon: '📄',
+    width: 500,
+    height: 400,
+    content: `
+      <div class="win95-text-viewer">
+        <div class="win95-menubar">
+          <span class="win95-menu-item">File</span>
+          <span class="win95-menu-item">Edit</span>
+          <span class="win95-menu-item">Help</span>
+        </div>
+        <div class="win95-text-content">
+          <img src="bamboo_frame.svg" class="bamboo-frame" alt="">
+          <pre class="win95-text">README.txt
+
+⚠️  SYSTEM WARNING ⚠️
+
+Your system has been compromised.
+
+Unauthorized access detected.
+Multiple security violations found.
+Data integrity cannot be verified.
+
+[!] DO NOT CLOSE THIS WINDOW [!]
+
+Attempting to restore system...
+
+Error: Restoration failed.
+Error: Security protocols offline.
+Error: Cannot establish secure connection.
+
+═══════════════════════════════════
+
+YOU SHOULDN'T HAVE OPENED THIS.
+
+═══════════════════════════════════</pre>
+        </div>
+      </div>
+    `,
+  },
+
   notepad: {
     title: 'Notepad',
-    icon: '📝',
+    icon: '✉️',
     width: 600,
     height: 400,
     content: `<textarea class="notepad-content" placeholder="Start typing..."></textarea>`,
@@ -95,9 +137,9 @@ export const apps = {
     }
   },
 
-  browser: {
+  camera: {
     title: 'ASCII Camera',
-    icon: '🌐',
+    icon: '📷',
     width: 900,
     height: 700,
     content: `
@@ -166,14 +208,10 @@ export const apps = {
       // ASCII characters ordered by visual density (dark to light)
       const ASCII_CHARS = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
       
-      // Dynamic resolution based on eye gaze
-      let currentWidth = 40  // Start low res
-      let currentHeight = 22
-      let targetWidth = 40   // Low res until looking at camera
-      let targetHeight = 22
+      // Always use highest resolution
+      const WIDTH = 140
+      const HEIGHT = 75
       let colorMode = 0  // 0: black/white, 1: red/white, 2: white/red, 3: white/black, 4: black/red
-      let lastBlinkState = false
-      let lookingAtCamera = false
       
       // Color mode classes
       const colorModes = ['mode-default', 'mode-red-white', 'mode-white-red', 'mode-white-black', 'mode-black-red']
@@ -185,32 +223,11 @@ export const apps = {
       }
       
       // Face tracking variables
-      let faceLandmarker = null
       let animationId = null
       let stream = null
       
-      // Load MediaPipe Face Landmarker
-      loading.textContent = 'Loading face tracking...'
-      try {
-        const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.mjs')
-        const { FaceLandmarker, FilesetResolver } = vision
-        const wasmFileset = await FilesetResolver.forVisionTasks(
-          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
-        )
-        faceLandmarker = await FaceLandmarker.createFromOptions(wasmFileset, {
-          baseOptions: {
-            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task',
-            delegate: 'GPU'
-          },
-          runningMode: 'VIDEO',
-          numFaces: 1,
-          outputFaceBlendshapes: true
-        })
-        loading.textContent = 'Starting camera...'
-      } catch (e) {
-        console.log('Face tracking not available:', e)
-        loading.textContent = 'Starting camera (no face tracking)...'
-      }
+      // Skip face tracking - not needed anymore
+      loading.textContent = 'Starting camera...'
       
       // Start camera
       try {
@@ -226,148 +243,10 @@ export const apps = {
         const processCanvas = document.createElement('canvas')
         processCanvas.width = 640
         processCanvas.height = 480
-        const processCtx = processCanvas.getContext('2d')
         
-        let lastFaceTime = 0
-        
-        // Get eye gaze direction as normalized values (-1 to 1)
-        function getGazeDirection(blendshapes) {
-          if (!blendshapes || blendshapes.length === 0) return { x: 0, y: 0 }
-          
-          const shapes = blendshapes[0].categories
-          
-          let lookLeft = 0, lookRight = 0, lookUp = 0, lookDown = 0
-          
-          for (const shape of shapes) {
-            if (shape.categoryName === 'eyeLookOutLeft') lookLeft += shape.score
-            if (shape.categoryName === 'eyeLookOutRight') lookRight += shape.score
-            if (shape.categoryName === 'eyeLookInLeft') lookRight += shape.score
-            if (shape.categoryName === 'eyeLookInRight') lookLeft += shape.score
-            if (shape.categoryName === 'eyeLookUpLeft' || shape.categoryName === 'eyeLookUpRight') lookUp += shape.score
-            if (shape.categoryName === 'eyeLookDownLeft' || shape.categoryName === 'eyeLookDownRight') lookDown += shape.score
-          }
-          
-          // Return normalized gaze direction
-          // Positive x = looking right, negative x = looking left
-          // Positive y = looking down, negative y = looking up
-          return {
-            x: (lookRight - lookLeft) / 2,  // -1 (left) to 1 (right)
-            y: (lookDown - lookUp) / 2      // -1 (up) to 1 (down)
-          }
-        }
-        
-        // Check if user is looking at a specific window
-        function isLookingAtWindow(blendshapes, windowEl) {
-          if (!windowEl) return false
-          
-          const gaze = getGazeDirection(blendshapes)
-          const rect = windowEl.getBoundingClientRect()
-          const screenCenterX = window.innerWidth / 2
-          const screenCenterY = window.innerHeight / 2
-          const windowCenterX = rect.left + rect.width / 2
-          const windowCenterY = rect.top + rect.height / 2
-          
-          // Calculate where the window is relative to screen center
-          const windowDirX = (windowCenterX - screenCenterX) / screenCenterX  // -1 to 1
-          const windowDirY = (windowCenterY - screenCenterY) / screenCenterY  // -1 to 1
-          
-          // Check if gaze direction roughly matches window direction
-          // Allow some tolerance (0.3)
-          const xMatch = Math.abs(gaze.x - windowDirX) < 0.5
-          const yMatch = Math.abs(gaze.y - windowDirY) < 0.5
-          
-          // Also check if looking roughly at center (window is centered)
-          const lookingCenter = Math.abs(gaze.x) < 0.2 && Math.abs(gaze.y) < 0.2
-          const windowNearCenter = Math.abs(windowDirX) < 0.3 && Math.abs(windowDirY) < 0.3
-          
-          return (xMatch && yMatch) || (lookingCenter && windowNearCenter)
-        }
-        
-        // Check if user is looking at camera (eyes forward)
-        function isLookingAtCamera(blendshapes) {
-          if (!blendshapes || blendshapes.length === 0) return false
-          
-          const shapes = blendshapes[0].categories
-          
-          // Find eye look directions
-          let lookLeft = 0, lookRight = 0, lookUp = 0, lookDown = 0
-          
-          for (const shape of shapes) {
-            if (shape.categoryName === 'eyeLookOutLeft') lookLeft = shape.score
-            if (shape.categoryName === 'eyeLookOutRight') lookRight = shape.score
-            if (shape.categoryName === 'eyeLookInLeft') lookRight += shape.score
-            if (shape.categoryName === 'eyeLookInRight') lookLeft += shape.score
-            if (shape.categoryName === 'eyeLookUpLeft' || shape.categoryName === 'eyeLookUpRight') lookUp += shape.score
-            if (shape.categoryName === 'eyeLookDownLeft' || shape.categoryName === 'eyeLookDownRight') lookDown += shape.score
-          }
-          
-          // Looking at camera = not looking strongly in any direction
-          const isLooking = lookLeft < 0.3 && lookRight < 0.3 && lookUp < 0.4 && lookDown < 0.4
-          return isLooking
-        }
-        
-        // Check if user is blinking
-        function isBlinking(blendshapes) {
-          if (!blendshapes || blendshapes.length === 0) return false
-          
-          const shapes = blendshapes[0].categories
-          
-          let leftBlink = 0, rightBlink = 0
-          
-          for (const shape of shapes) {
-            if (shape.categoryName === 'eyeBlinkLeft') leftBlink = shape.score
-            if (shape.categoryName === 'eyeBlinkRight') rightBlink = shape.score
-          }
-          
-          // Both eyes mostly closed = blink
-          return leftBlink > 0.5 && rightBlink > 0.5
-        }
-        
-        // ASCII render loop with face tracking
+        // ASCII render loop
         async function renderASCII() {
           if (!video.srcObject) return
-          
-          // Process face tracking
-          if (faceLandmarker && video.readyState >= 2) {
-            const now = performance.now()
-            if (now - lastFaceTime > 50) { // ~20fps for face tracking
-              processCtx.drawImage(video, 0, 0, 640, 480)
-              try {
-                const results = faceLandmarker.detectForVideo(processCanvas, now)
-                
-                if (results.faceBlendshapes && results.faceBlendshapes.length > 0) {
-                  // Check if looking at camera
-                  lookingAtCamera = isLookingAtCamera(results.faceBlendshapes)
-                  
-                  // Set resolution based on eye contact
-                  if (lookingAtCamera) {
-                    targetWidth = 140  // High res when looking at camera
-                    targetHeight = 75
-                  } else {
-                    targetWidth = 40   // Low res when not looking
-                    targetHeight = 22
-                  }
-                  
-                  // Check for blink to cycle color modes
-                  const currentBlink = isBlinking(results.faceBlendshapes)
-                  if (currentBlink && !lastBlinkState) {
-                    colorMode = (colorMode + 1) % 5
-                    setColorMode(colorMode)
-                  }
-                  lastBlinkState = currentBlink
-                }
-                
-              } catch (e) {}
-              lastFaceTime = now
-            }
-          }
-          
-          // Smooth resolution changes
-          currentWidth += (targetWidth - currentWidth) * 0.1
-          currentHeight += (targetHeight - currentHeight) * 0.1
-          
-          const WIDTH = Math.round(currentWidth)
-          const HEIGHT = Math.round(currentHeight)
           
           // Calculate font size to fill the viewport
           const viewport = asciiOutput.parentElement
@@ -436,6 +315,10 @@ export const apps = {
               if (stream) stream.getTracks().forEach(track => track.stop())
               // Clear master flag so next window can become master
               window.asciiCameraMaster = false
+              // Show "look at yourself" final sequence
+              if (window.showFinalSequence) {
+                window.showFinalSequence()
+              }
             }
           })
         })
@@ -445,6 +328,24 @@ export const apps = {
         observer.observe(windowEl.parentNode, { childList: true })
       }
     }
+  },
+
+  browser: {
+    title: 'Browser',
+    icon: '🌐',
+    width: 800,
+    height: 600,
+    content: `
+      <div class="browser-content">
+        <div class="browser-toolbar">
+          <input type="text" class="browser-url" value="https://example.com" readonly>
+        </div>
+        <div class="browser-page">
+          <h1>Browser</h1>
+          <p>This is a placeholder browser window.</p>
+        </div>
+      </div>
+    `,
   },
 
   explorer: {

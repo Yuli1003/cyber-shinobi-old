@@ -1,525 +1,125 @@
+/**
+ * Main Entry Point
+ * Cyber Shinobi - Windows-style desktop simulator
+ */
+
+// ============================================
+// DEBUG MODE: Set to true to skip to README sequence
+const DEBUG_MODE = false
+// ============================================
+
 import './style.css'
 import { WindowManager } from './windowManager.js'
 import { apps } from './apps.js'
 
+// Modules
+import { 
+  initAntivirus, 
+  showAntivirusPopup,
+  spawnReadmeFiles
+} from './modules/antivirus.js'
+import { 
+  initDesktop as initDesktopModule, 
+  createDesktopIcons, 
+  initTaskbar, 
+  initStartMenu, 
+  initClock, 
+  initContextMenu,
+  disableAllDesktopInteractions,
+  enableAllDesktopInteractions
+} from './modules/desktop.js'
+import { initLockScreen } from './modules/lockscreen.js'
 
-
-// Desktop icons configuration
-const desktopIcons = [
-  { id: 'explorer', icon: '📁', label: 'File Explorer' },
-  { id: 'browser', icon: '🌐', label: 'Browser' },
-  { id: 'notepad', icon: '📝', label: 'Notepad' },
-  { id: 'calculator', icon: '🔢', label: 'Calculator' },
-  { id: 'terminal', icon: '💻', label: 'Terminal' },
-  { id: 'settings', icon: '⚙️', label: 'Settings' },
-]
-
-// Initialize window manager
+// Global state
 const windowManager = new WindowManager()
-window.windowManager = windowManager // Make accessible globally for fog check
+window.windowManager = windowManager
+window.apps = apps
 
-// Initialize desktop
-function initDesktop() {
+// Initialize desktop module
+initDesktopModule(windowManager, openApp)
+initAntivirus(windowManager)
+
+// Expose functions globally for antivirus module
+window.disableAllDesktopInteractions = disableAllDesktopInteractions
+window.enableAllDesktopInteractions = enableAllDesktopInteractions
+
+/**
+ * Initialize desktop components
+ */
+function initializeDesktop() {
   createDesktopIcons()
   initTaskbar()
   initStartMenu()
   initClock()
   initContextMenu()
-  initFog()
+  
+  // Disable all desktop interactions - only shield will be clickable
+  disableAllDesktopInteractions()
+  
+  // Show antivirus popup (shield with !)
+  showAntivirusPopup()
 }
 
-// Create desktop icons
-function createDesktopIcons() {
-  const container = document.getElementById('desktop-icons')
-  
-  desktopIcons.forEach(iconData => {
-    const icon = document.createElement('div')
-    icon.className = 'desktop-icon'
-    icon.innerHTML = `
-      <span class="icon">${iconData.icon}</span>
-      <span class="label">${iconData.label}</span>
-    `
-    
-    icon.addEventListener('click', (e) => {
-      // Remove selected from all icons
-      document.querySelectorAll('.desktop-icon').forEach(i => i.classList.remove('selected'))
-      icon.classList.add('selected')
-    })
-    
-    icon.addEventListener('dblclick', () => {
-      openApp(iconData.id)
-    })
-    
-    container.appendChild(icon)
-  })
-  
-  // Click on desktop to deselect icons
-  document.getElementById('desktop').addEventListener('click', (e) => {
-    if (e.target.id === 'desktop' || e.target.id === 'desktop-icons') {
-      document.querySelectorAll('.desktop-icon').forEach(i => i.classList.remove('selected'))
-    }
-  })
-}
-
-// Initialize taskbar
-function initTaskbar() {
-  // Update taskbar when windows change
-  windowManager.onWindowsChange = updateTaskbar
-}
-
-function updateTaskbar() {
-  // Don't show open windows in taskbar
-  const container = document.getElementById('taskbar-apps')
-  container.innerHTML = ''
-}
-
-// Initialize start menu
-function initStartMenu() {
-  const startBtn = document.getElementById('start-btn')
-  const startMenu = document.getElementById('start-menu')
-  
-  startBtn.addEventListener('click', (e) => {
-    e.stopPropagation()
-    startMenu.classList.toggle('hidden')
-  })
-  
-  // Close start menu when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!startMenu.contains(e.target) && e.target !== startBtn) {
-      startMenu.classList.add('hidden')
-    }
-  })
-  
-  // Start menu app clicks
-  document.querySelectorAll('.start-app').forEach(app => {
-    app.addEventListener('click', () => {
-      const appId = app.dataset.app
-      openApp(appId)
-      startMenu.classList.add('hidden')
-    })
-  })
-  
-  // Power button
-  document.querySelector('.power-btn').addEventListener('click', () => {
-    if (confirm('Are you sure you want to shut down?')) {
-      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#000;color:#fff;font-size:24px;">Goodbye!</div>'
-    }
-  })
-}
-
-// Initialize clock
-function initClock() {
-  function updateClock() {
-    const now = new Date()
-    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    const date = now.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
-    document.getElementById('clock').innerHTML = `${time}<br>${date}`
-  }
-  
-  updateClock()
-  setInterval(updateClock, 1000)
-}
-
-// Initialize context menu
-function initContextMenu() {
-  let contextMenu = null
-  
-  document.getElementById('desktop').addEventListener('contextmenu', (e) => {
-    e.preventDefault()
-    
-    // Remove existing context menu
-    if (contextMenu) {
-      contextMenu.remove()
-    }
-    
-    // Only show on desktop background
-    if (e.target.id === 'desktop' || e.target.id === 'desktop-icons' || e.target.closest('#desktop-icons')) {
-      contextMenu = document.createElement('div')
-      contextMenu.className = 'context-menu'
-      contextMenu.innerHTML = `
-        <div class="context-menu-item" data-action="refresh">🔄 Refresh</div>
-        <div class="context-menu-divider"></div>
-        <div class="context-menu-item" data-action="new-folder">📁 New Folder</div>
-        <div class="context-menu-item" data-action="new-file">📄 New File</div>
-        <div class="context-menu-divider"></div>
-        <div class="context-menu-item" data-action="settings">⚙️ Display Settings</div>
-      `
-      
-      contextMenu.style.left = `${e.clientX}px`
-      contextMenu.style.top = `${e.clientY}px`
-      
-      document.body.appendChild(contextMenu)
-      
-      // Handle menu item clicks
-      contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const action = item.dataset.action
-          if (action === 'settings') {
-            openApp('settings')
-          } else if (action === 'refresh') {
-            location.reload()
-          }
-          contextMenu.remove()
-          contextMenu = null
-        })
-      })
-    }
-  })
-  
-  // Close context menu on click
-  document.addEventListener('click', () => {
-    if (contextMenu) {
-      contextMenu.remove()
-      contextMenu = null
-    }
-  })
-}
-
-// Track browser window spam state
-let browserSpamActive = false
-let browserSpamCount = 0
-let browserSpamMaxClicks = 20
-let lastBrowserWindow = null
-
-// Open an app
+/**
+ * Open an application
+ */
 function openApp(appId, x, y) {
   const appConfig = apps[appId]
-  if (appConfig) {
-    const config = { ...appConfig }
-    if (x !== undefined) config.x = x
-    if (y !== undefined) config.y = y
-    const win = windowManager.createWindow(config)
+  if (!appConfig) return null
+  
+  const config = { ...appConfig }
+  if (x !== undefined) config.x = x
+  if (y !== undefined) config.y = y
+  const win = windowManager.createWindow(config)
+  
+  return win
+}
+
+/**
+ * DOM Ready - Initialize application
+ */
+document.addEventListener('DOMContentLoaded', () => {
+  // Debug mode: skip directly to README sequence
+  if (DEBUG_MODE) {
+    // Hide lock screen and show desktop immediately
+    const lockScreen = document.getElementById('lock-screen')
+    const desktop = document.getElementById('desktop')
+    if (lockScreen) lockScreen.style.display = 'none'
+    if (desktop) desktop.classList.remove('hidden')
     
-    // If opening the browser (ASCII Camera), activate click spam mode
-    if (appId === 'browser' && !browserSpamActive) {
-      browserSpamActive = true
-      browserSpamCount = 0
-      lastBrowserWindow = win
-      
-      // Add click listener for spam windows
-      const spamClickHandler = (e) => {
-        if (!browserSpamActive) return
-        
-        browserSpamCount++
-        
-        if (browserSpamCount < browserSpamMaxClicks) {
-          // Random offset position, keeping windows on screen
-          const randomX = Math.floor(Math.random() * (window.innerWidth - 500))
-          const randomY = Math.floor(Math.random() * (window.innerHeight - 400))
-          
-          openApp('browser', randomX, randomY)
-        } else {
-          // After 20 clicks, disable spam mode and show final sequence
-          browserSpamActive = false
-          document.removeEventListener('click', spamClickHandler, true)
-          
-          // Show "look at yourself" window
-          showFinalSequence()
-        }
-        
-        // Prevent the click from doing anything else during spam mode
-        e.preventDefault()
-        e.stopPropagation()
-      }
-      
-      // Use capture phase to intercept all clicks
-      setTimeout(() => {
-        document.addEventListener('click', spamClickHandler, true)
-      }, 100)
-    }
+    // Initialize desktop without the antivirus sequence
+    createDesktopIcons()
+    initTaskbar()
+    initStartMenu()
+    initClock()
+    initContextMenu()
     
-    return win
-  }
-}
-
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', initLockScreen)
-
-function initLockScreen() {
-  const lockScreen = document.getElementById('lock-screen');
-  const loginForm = document.getElementById('login-form');
-  const usernameInput = document.getElementById('username');
-  const passwordInput = document.getElementById('password');
-  const desktop = document.getElementById('desktop');
-
-  loginForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (usernameInput.value.trim() !== '' && passwordInput.value.trim() !== '') {
-      lockScreen.classList.add('hidden');
-      desktop.classList.remove('hidden');
-      // Use a timeout to allow the fade-out transition to complete
-      setTimeout(() => {
-        lockScreen.style.display = 'none';
-        initDesktop();
-      }, 500);
-    } else {
-      // Briefly shake the form to indicate an error
-      loginForm.classList.add('shake');
-      setTimeout(() => {
-        loginForm.classList.remove('shake');
-      }, 500);
-    }
-  });
-}
-
-// Show final sequence after 20 clicks
-function showFinalSequence() {
-  // Create "look at yourself" window
-  const finalWindow = windowManager.createWindow({
-    title: '',
-    icon: '',
-    width: 900,
-    height: 700,
-    x: Math.floor((window.innerWidth - 900) / 2),
-    y: Math.floor((window.innerHeight - 700) / 2),
-    content: `
-      <div class="camera-window ascii-camera">
-        <div class="camera-viewport ascii-viewport">
-          <pre class="ascii-output final-message">look at yourself</pre>
-        </div>
-        <div class="mirror-text">can you even look at yourself in the mirror?</div>
-      </div>
-    `
-  })
-  
-  // Add the special class for red titlebar
-  const finalWindowEl = document.getElementById(finalWindow.id)
-  if (finalWindowEl) {
-    finalWindowEl.classList.add('ascii-camera-window')
-  }
-  
-  // After 1 second, close all windows with offset
-  setTimeout(() => {
-    closeAllWindowsWithDelay()
-  }, 1000)
-}
-
-// Close all windows with small delay between each
-function closeAllWindowsWithDelay() {
-  const windows = [...windowManager.windows]
-  let delay = 0
-  
-  windows.forEach((win) => {
+    // Enable all interactions for debugging
+    enableAllDesktopInteractions()
+    
+    // Spawn README files immediately
     setTimeout(() => {
-      windowManager.closeWindow(win.id)
-    }, delay)
-    delay += 50 // 50ms offset between each close
-  })
-}
+      spawnReadmeFiles()
+    }, 500)
+    return
+  }
+  
+  // Normal flow: Start from login screen
+  // After successful login show the regular desktop and immediately spawn README files
+  initLockScreen(() => {
+    // Initialize desktop UI components (skip antivirus popup)
+    createDesktopIcons()
+    initTaskbar()
+    initStartMenu()
+    initClock()
+    initContextMenu()
 
-// // Initialize fog effect with interactive particles
-// function initFog() {
-//   const fogContainer = document.getElementById('fog-container')
-//   const popup = document.getElementById('too-late-popup')
-//   const particles = []
-//   const particleCount = 30
-//   let fogActivated = false
-//   let fogCleared = false
-//   let clearingProgress = 0
-//   let lastClearTime = 0
-//   let lastMouseX = 0
-//   let lastMouseY = 0
-//   let totalDistanceMoved = 0
-//   let mouseEnteredFog = false // Track if mouse has entered fog area
-  
-//   // Ensure fog hole is hidden initially - use !important via direct property
-//   fogContainer.style.setProperty('--mouse-x', '-9999px')
-//   fogContainer.style.setProperty('--mouse-y', '-9999px')
-  
-//   // Activate fog on first mouse movement
-//   function activateFog() {
-//     if (fogActivated) return
-//     fogActivated = true
-//     fogContainer.classList.add('active')
-//     document.removeEventListener('mousemove', activateFog)
-//   }
-  
-//   document.addEventListener('mousemove', activateFog)
-  
-//   // Mouse clearing effect - update CSS variables for mask position
-//   // Use capture phase to ensure we get the event before windows
-//   document.addEventListener('mousemove', (e) => {
-//     if (fogCleared) return
-    
-//     // Check if any window is currently open
-//     const windowManager = window.windowManager
-//     const hasOpenWindows = windowManager && windowManager.windows && 
-//       windowManager.windows.some(w => !w.minimized)
-    
-//     // Don't clear fog if any window is open
-//     if (hasOpenWindows) {
-//       fogContainer.style.setProperty('--mouse-x', '-1000px')
-//       fogContainer.style.setProperty('--mouse-y', '-1000px')
-//       return
-//     }
-    
-//     // Always update mask position based on mouse Y position relative to fog
-//     const viewportHeight = window.innerHeight
-//     const fogTop = viewportHeight * 0.5 // Fog covers bottom 50%
-    
-//     // Only show clearing hole if mouse is actually in the fog area (not just near it)
-//     if (e.clientY > fogTop) {
-//       // Mark that mouse has entered fog
-//       mouseEnteredFog = true
-      
-//       // Now show the clearing hole
-//       fogContainer.style.setProperty('--mouse-x', `${e.clientX}px`)
-//       fogContainer.style.setProperty('--mouse-y', `${e.clientY}px`)
-      
-//       // Calculate distance moved
-//       if (lastMouseX > 0 && lastMouseY > 0) {
-//         const dx = e.clientX - lastMouseX
-//         const dy = e.clientY - lastMouseY
-//         const distance = Math.sqrt(dx * dx + dy * dy)
-        
-//         totalDistanceMoved += distance
-//         clearingProgress = totalDistanceMoved / 50
-//       }
-      
-//       lastMouseX = e.clientX
-//       lastMouseY = e.clientY
-      
-//       // Need to move the mouse a LOT (about 5000+ pixels of movement in fog)
-//       if (clearingProgress > 100 && !fogCleared) {
-//         fogCleared = true
-//         fogContainer.classList.add('clearing')
-        
-//         // Show popup after fog fades
-//         setTimeout(() => {
-//           popup.classList.remove('hidden')
-//         }, 2000)
-//       }
-//     } else {
-//       fogContainer.style.setProperty('--mouse-x', '-1000px')
-//       fogContainer.style.setProperty('--mouse-y', '-1000px')
-//     }
-//   }, true) // Use capture phase
-  
-//   // Hide clear hole when mouse leaves window
-//   document.addEventListener('mouseleave', () => {
-//     if (!fogCleared) {
-//       fogContainer.style.setProperty('--mouse-x', '-1000px')
-//       fogContainer.style.setProperty('--mouse-y', '-1000px')
-//     }
-//   })
-  
-//   // Close popup and bring fog back (X button in titlebar)
-//   const closeBtn = popup.querySelector('.titlebar-btn.close')
-//   if (closeBtn) {
-//     closeBtn.addEventListener('click', () => {
-//       popup.classList.add('hidden')
-//       fogContainer.classList.remove('clearing')
-//       fogContainer.classList.add('returning')
-//       setTimeout(() => {
-//         fogContainer.classList.remove('returning')
-//         fogCleared = false
-//         clearingProgress = 0
-//         totalDistanceMoved = 0
-//       }, 3000)
-//     })
-//   }
-  
-//   // Create fog particles
-//   for (let i = 0; i < particleCount; i++) {
-//     const particle = document.createElement('div')
-//     particle.className = 'fog-particle'
-    
-//     // Random size between 100 and 300px
-//     const size = 100 + Math.random() * 200
-//     particle.style.width = `${size}px`
-//     particle.style.height = `${size}px`
-    
-//     // Random position in lower portion of screen
-//     const x = Math.random() * 100
-//     const y = 30 + Math.random() * 70 // Bottom 70%
-//     particle.style.left = `${x}%`
-//     particle.style.top = `${y}%`
-    
-//     // Random opacity
-//     particle.style.opacity = 0.3 + Math.random() * 0.4
-    
-//     // Store original position for respawn
-//     particle.dataset.origX = x
-//     particle.dataset.origY = y
-//     particle.dataset.origOpacity = particle.style.opacity
-    
-//     // Add hover interaction
-//     particle.addEventListener('mouseenter', () => scatterParticle(particle))
-    
-//     fogContainer.appendChild(particle)
-//     particles.push(particle)
-//   }
-  
-//   // Also scatter particles near mouse movement
-//   fogContainer.addEventListener('mousemove', (e) => {
-//     const rect = fogContainer.getBoundingClientRect()
-//     const mouseX = e.clientX - rect.left
-//     const mouseY = e.clientY - rect.top
-    
-//     particles.forEach(particle => {
-//       if (particle.classList.contains('scattered')) return
-      
-//       const pRect = particle.getBoundingClientRect()
-//       const pCenterX = pRect.left + pRect.width / 2 - rect.left
-//       const pCenterY = pRect.top + pRect.height / 2 - rect.top
-      
-//       const distance = Math.sqrt(
-//         Math.pow(mouseX - pCenterX, 2) + 
-//         Math.pow(mouseY - pCenterY, 2)
-//       )
-      
-//       // Scatter if mouse is within 100px
-//       if (distance < 100) {
-//         scatterParticle(particle)
-//       }
-//     })
-//   })
-  
-//   function scatterParticle(particle) {
-//     if (particle.classList.contains('scattered')) return
-    
-//     particle.classList.add('scattered')
-    
-//     // Random scatter direction
-//     const scatterX = (Math.random() - 0.5) * 200
-//     const scatterY = -50 - Math.random() * 100 // Scatter upward
-//     particle.style.transform = `translate(${scatterX}px, ${scatterY}px) scale(1.5)`
-    
-//     // Respawn particle after it fades
-//     setTimeout(() => {
-//       particle.style.transition = 'none'
-//       particle.classList.remove('scattered')
-//       particle.style.transform = ''
-//       particle.style.left = `${Math.random() * 100}%`
-//       particle.style.top = `${30 + Math.random() * 70}%`
-//       particle.style.opacity = '0'
-      
-//       // Force reflow
-//       particle.offsetHeight
-      
-//       // Fade back in
-//       particle.style.transition = 'transform 1.5s ease-out, opacity 1.5s ease-out'
-//       setTimeout(() => {
-//         particle.style.opacity = particle.dataset.origOpacity
-//       }, 50)
-//     }, 1500)
-//   }
-  
-//   // Gentle floating animation for particles
-//   function animateParticles() {
-//     particles.forEach((particle, i) => {
-//       if (particle.classList.contains('scattered')) return
-      
-//       const time = Date.now() / 1000
-//       const offsetX = Math.sin(time * 0.5 + i) * 10
-//       const offsetY = Math.sin(time * 0.3 + i * 0.5) * 5
-      
-//       if (!particle.classList.contains('scattered')) {
-//         particle.style.transform = `translate(${offsetX}px, ${offsetY}px)`
-//       }
-//     })
-//     requestAnimationFrame(animateParticles)
-//   }
-  
-//   animateParticles()
-// }
+    // Enable interactions so the spawned README files can be interacted with
+    enableAllDesktopInteractions()
+
+    // Spawn README files shortly after the desktop appears
+    setTimeout(() => {
+      spawnReadmeFiles()
+    }, 500)
+  })
+})

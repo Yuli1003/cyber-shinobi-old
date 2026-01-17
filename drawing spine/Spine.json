@@ -1,0 +1,12 @@
+{"skeleton":{"images":""},
+"bones":[{"name":"root"}],
+"slots":[
+	{"name":"slice1","bone":"root","attachment":"slice1"}
+],
+"skins":{
+	"default":{
+		"slice1":{"slice1":{"x":442.5,"y":215.5,"width":433,"height":433}}
+	}
+},
+"animations":{"animation":{}}
+}

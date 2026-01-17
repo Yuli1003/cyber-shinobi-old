@@ -109,8 +109,10 @@ export class WindowManager {
       windowData.y = startTop + (e.clientY - startY)
       
       // Keep window in bounds
-      windowData.x = Math.max(0, Math.min(window.innerWidth - 100, windowData.x))
-      windowData.y = Math.max(0, Math.min(window.innerHeight - 100, windowData.y))
+      const canvasWidth = 1536
+      const canvasHeight = 864
+      windowData.x = Math.max(0, Math.min(canvasWidth - 100, windowData.x))
+      windowData.y = Math.max(0, Math.min(canvasHeight - 100, windowData.y))
       
       windowEl.style.left = `${windowData.x}px`
       windowEl.style.top = `${windowData.y}px`
@@ -285,6 +287,11 @@ export class WindowManager {
         el.remove()
       }
       this.windows.splice(index, 1)
+      
+      // Spawn offscreen Game of Life pattern when window closes
+      if (window.spawnOffscreenPattern) {
+        window.spawnOffscreenPattern()
+      }
       
       // Focus next window
       if (this.windows.length > 0) {

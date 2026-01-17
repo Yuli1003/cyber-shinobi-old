@@ -1,0 +1,44 @@
+{"skeleton":{"images":""},
+"bones":[{"name":"root"}],
+"slots":[
+	{"name":"browser.png","bone":"root","attachment":"browser.png_4"},
+	{"name":"browser.png","bone":"root","attachment":"browser.png_3"},
+	{"name":"browser.png","bone":"root","attachment":"browser.png_2"},
+	{"name":"browser.png","bone":"root","attachment":"browser.png"},
+	{"name":"calc.png","bone":"root","attachment":"calc.png"},
+	{"name":"files.png","bone":"root","attachment":"files.png_6"},
+	{"name":"files.png","bone":"root","attachment":"files.png_5"},
+	{"name":"files.png","bone":"root","attachment":"files.png_4"},
+	{"name":"files.png","bone":"root","attachment":"files.png_3"},
+	{"name":"files.png","bone":"root","attachment":"files.png_2"},
+	{"name":"files.png","bone":"root","attachment":"files.png"},
+	{"name":"settings.png_5","bone":"root","attachment":"settings.png_5"},
+	{"name":"settings.png","bone":"root","attachment":"settings.png_4"},
+	{"name":"settings.png","bone":"root","attachment":"settings.png_3"},
+	{"name":"settings.png","bone":"root","attachment":"settings.png_2"},
+	{"name":"settings.png","bone":"root","attachment":"settings.png"},
+	{"name":"TRASH.png","bone":"root","attachment":"TRASH.png"}
+],
+"skins":{
+	"default":{
+		"browser.png":{"browser.png":{"x":196,"y":337,"width":64,"height":64}},
+		"browser.png":{"browser.png":{"x":628,"y":613,"width":64,"height":64}},
+		"browser.png":{"browser.png":{"x":599.5,"y":641.5,"width":63,"height":63}},
+		"browser.png":{"browser.png":{"x":1447.5,"y":275.5,"width":125,"height":125}},
+		"calc.png":{"calc.png":{"x":134.5,"y":226.5,"width":59,"height":41}},
+		"files.png":{"files.png":{"x":163.5,"y":456.5,"width":59,"height":49}},
+		"files.png":{"files.png":{"x":134.5,"y":451,"width":59,"height":50}},
+		"files.png":{"files.png":{"x":85.5,"y":568,"width":59,"height":50}},
+		"files.png":{"files.png":{"x":105.5,"y":557,"width":59,"height":50}},
+		"files.png":{"files.png":{"x":114.5,"y":544,"width":59,"height":50}},
+		"files.png":{"files.png":{"x":95.5,"y":533,"width":59,"height":50}},
+		"settings.png":{"settings.png":{"x":134,"y":504.5,"width":56,"height":59}},
+		"settings.png_5":{"settings.png_5":{"x":465.5,"y":215,"width":243,"height":230}},
+		"settings.png":{"settings.png":{"x":584,"y":76,"width":186,"height":98}},
+		"settings.png":{"settings.png":{"x":584,"y":254,"width":66,"height":50}},
+		"settings.png":{"settings.png":{"x":617,"y":235,"width":118,"height":88}},
+		"TRASH.png":{"TRASH.png":{"x":426.5,"y":206.5,"width":55,"height":57}}
+	}
+},
+"animations":{"animation":{}}
+}

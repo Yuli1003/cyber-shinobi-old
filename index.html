@@ -7,12 +7,13 @@
     <title>Windows Desktop</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;900&family=Syne+Mono&family=Bytesized&family=Doto:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Sixtyfour&family=VT323&display=swap" rel="stylesheet">
     <!-- TensorFlow.js and BodyPix for person segmentation -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0"></script>
   </head>
   <body>
+    <div id="main-canvas">
     <div id="lock-screen">
       <div class="lock-screen-box">
         <h2>Sign in</h2>
@@ -88,7 +89,7 @@
       </div>
       
       <!-- Fog Effect -->
-      <div id="fog-container">
+      <!-- <div id="fog-container">
         <div class="fog-side left">
           <div class="fog-layer"></div>
           <div class="fog-layer"></div>
@@ -97,8 +98,44 @@
           <div class="fog-layer"></div>
           <div class="fog-layer"></div>
         </div>
+      </div> -->
+      
+      <!-- Antivirus Shield Icon -->
+      <div id="antivirus-icon-container" class="hidden">
+        <div class="antivirus-icon-small">🛡️</div>
+        <div class="antivirus-exclamation">!</div>
       </div>
       
+      <!-- Antivirus Warning Notification -->
+      <div id="antivirus-notification-container" class="hidden">
+        <div class="antivirus-notification">
+          <div class="antivirus-header">
+            <span class="antivirus-icon">⚠️</span>
+            <span class="antivirus-title">Security Alert</span>
+          </div>
+          <div class="antivirus-content">
+            <p class="antivirus-message">Possible security breach has been detected.</p>
+            <p class="antivirus-recommendation">It is recommended to update your antivirus/firewall immediately.</p>
+          </div>
+          <button class="antivirus-update-btn">Update Now</button>
+        </div>
+      </div>
+
+      <!-- Update Failed Popup -->
+      <div id="update-failed-popup" class="hidden">
+        <div class="installation-window">
+          <div class="installation-header">
+            <span class="installation-icon">⚠️</span>
+            <span class="installation-title" style="color: #e74c3c;">Update Failed</span>
+          </div>
+          <div class="installation-content">
+            <p class="installation-status">The security update could not be completed.</p>
+            <p class="antivirus-recommendation" style="margin: 10px 0;">We recommend re-installing the firewall.</p>
+            <button class="antivirus-update-btn">Install</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Too Late Popup -->
       <div id="too-late-popup" class="hidden">
         <div class="popup-window">
@@ -114,6 +151,7 @@
           </div>
         </div>
       </div>
+    </div>
     </div>
     
     <script type="module" src="/src/main.js"></script>
