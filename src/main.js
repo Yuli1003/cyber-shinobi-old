@@ -182,6 +182,9 @@ function waitForSpaceThenRerun() {
     document.removeEventListener('keydown', onSpace)
     overlay.remove()
     resetToLoginScreen()
+    setTimeout(() => {
+      playSequenceAudio()
+    }, 2800)
     setTimeout(() => runLoginAutomation(), 300)
   }
   document.addEventListener('keydown', onSpace)
